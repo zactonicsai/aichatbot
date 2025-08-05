@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home</title>
+  <style>
+    /* Container and toggle button */
+    #chat-container { position: fixed; bottom: 20px; right: 20px; z-index:1000; font-family: sans-serif; }
+    #chat-toggle { width: 60px; height: 60px; border-radius:50%; background:#007bff; color:#fff; border:none; font-size:24px; cursor:pointer; }
+    /* Chat window */
+    #chat-window { display:none; width:300px; height:400px; background:#fff; border:1px solid #ccc; border-radius:8px; flex-direction:column; overflow:hidden; margin-top:10px; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+    #chat-header { background:#007bff; color:#fff; padding:10px; text-align:center; }
+    #chat-messages { flex:1; padding:10px; overflow-y:auto; background:#f9f9f9; }
+    .msg { margin:5px 0; padding:8px; border-radius:8px; max-width:80%; }
+    .user { align-self:flex-end; background:#dcf8c6; text-align:right; }
+    .bot { align-self:flex-start; background:#eee; text-align:left; }
+    #chat-input-area { display:flex; border-top:1px solid #ccc; }
+    #chat-input { flex:1; border:none; padding:10px; outline:none; }
+    #chat-send { border:none; background:#007bff; color:#fff; padding:0 16px; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <button id="chat-toggle">💬</button>
+    <div id="chat-window" style="display:flex;">
+      <div id="chat-header">Customer Support</div>
+      <div id="chat-messages"></div>
+      <div id="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Type your message..." />
+        <button id="chat-send">▶</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const toggleBtn = document.getElementById('chat-toggle');
+    const windowEl = document.getElementById('chat-window');
+    const messagesEl = document.getElementById('chat-messages');
+    const inputEl = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('chat-send');
+
+    toggleBtn.addEventListener('click', () => {
+      const isVisible = windowEl.style.display !== 'none';
+      windowEl.style.display = isVisible ? 'none' : 'flex';
+      toggleBtn.textContent = isVisible ? '💬' : '✕';
+    });
+
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text) return;
+      appendMessage(text, 'user');
+      inputEl.value = '';
+
+      // URL-encoded form data
+      const params = new URLSearchParams();
+      params.append('message', text);
+
+      try {
+       const res = await fetch('http://localhost/chat', {
+        method: 'POST',
+        body: JSON.stringify({ data: params.toString() })
+      });
+        const data = await res.json();
+        alert(JSON.stringify(data.reply))
+        appendMessage(data.reply, 'bot');
+      } catch (err) {
+        appendMessage('Sorry, something went wrong.', 'bot');
+      }
+    }
+
+    function appendMessage(text, type) {
+      const div = document.createElement('div');
+      div.className = `msg ${type}`;
+      div.textContent = text;
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+  </script>
+</body>
+</html>
